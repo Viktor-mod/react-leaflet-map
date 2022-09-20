@@ -6,7 +6,7 @@ function App() {
     <div className="App">
       <DinaMap />
     </div>
-  );
+  )
 }
 
 export default App;

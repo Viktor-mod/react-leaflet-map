@@ -1,32 +1,11 @@
-import React, { useState } from 'react';
-import { MapContainer, TileLayer, GeoJSON, Popup, Marker, Circle } from 'react-leaflet';
+import React from 'react';
+import { MapContainer, TileLayer, GeoJSON, Marker, Circle, Polygon } from 'react-leaflet';
 // import countries from './countries.json'
-import L from 'leaflet'
 import axios from 'axios'
+import L from 'leaflet'
 
 import './App.css'
 import './DinaMap.css'
-// L.Icon.Default.imagePath = "https://unpkg.com/leaflet@1.5.0/dist/images/";
-delete L.Icon.Default.prototype._getIconUrl;
-
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: require('leaflet/dist/images/marker-pin.png'),
-    iconUrl: require('leaflet/dist/images/marker-pin.png'),
-    shadowUrl: require('leaflet/dist/images/marker-shadow.png')
-})
-
-
-
-// const position = [51, 105];  
-
-// function GetIcon(_iconSize) {
-//     return L.icon({
-//         iconRetinaUrl: require("leaflet/dist/images/marker-pin.png"),
-//         iconUrl: require("leaflet/dist/images/marker-pin.png"),
-//         shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
-//         iconSize: [_iconSize]
-//     })
-// };
 
 export class DinaMap extends React.Component {
 
@@ -45,7 +24,7 @@ export class DinaMap extends React.Component {
         cs: null,
         url: "http://cris.icc.ru/dataset/list?f=2132&count_rows=true&unique=undefined&count_rows=1&iDisplayStart=0&iDisplayLength=10",
         minColor: '#000000',
-        maxColor: '#f5f5f5'
+        maxColor: '#ffffff'
     };
 
     constructor(props) {
@@ -107,8 +86,8 @@ export class DinaMap extends React.Component {
         let nMaxR = this.state.maxColor.charAt(1) + this.state.maxColor.charAt(2);
         let nMinG = this.state.minColor.substring(3, 5);
         let nMaxG = this.state.maxColor.substring(3, 5);
-        let nMinB = this.state.minColor.substring(6, 8);
-        let nMaxB = this.state.maxColor.substring(6, 8);
+        let nMinB = this.state.minColor.substring(5, 7);
+        let nMaxB = this.state.maxColor.substring(5, 7);
         console.log(nMinG, nMaxG)
         return "#" + this.getPart(i, qnt, nMinR, nMaxR)  + this.getPart(i, qnt, nMinG, nMaxG) + this.getPart(i, qnt, nMinB, nMaxB)
     };
@@ -121,11 +100,32 @@ export class DinaMap extends React.Component {
     getMapData = async (url) => {
         let MapData = await axios.get(url);
 
+        let newcs=[];
+
         // this.clearMap();
 
         let countries = await axios.get(
             "/countries.json"
         );
+
+        function onEachCountries(feature, layer) {
+            const countryName = feature.properties.ADMIN;
+            layer.setStyle({ fillColor: 'yellow', weight: 2, fillOpacity: 5 })
+            newcs.push(layer);
+            //   if (countryName !== "Russia") {
+            //     layer.setStyle({ fillColor: 'yellow', weight: 2, fillOpacity: 5 })
+            //   } else {
+            //     layer.setStyle({ color: "#000000", fillColor: "white", weight: 1 })
+            //   }
+          }
+          
+        let vectorLayer = L.geoJson(countries.data, {
+            onEachFeature: onEachCountries
+        });
+        console.log(vectorLayer);
+        console.log("----")
+
+
         // console.log(countries.data.features)
 
         // this.GeoJsonLayer.current.leafletElement.clearLayers().addData(countries)
@@ -171,51 +171,106 @@ export class DinaMap extends React.Component {
         this.setState({
             GeoJSON: MapData.aaData,
             reference: reference,
-            features: fs,
+            // features: countries.data,
             cs: countries.data,
             name: { "type": "GeometryCollection", "geometries": [ { "type": "Linestring", "coordinates": [[10.0, 11.2], [10.5, 11.9]] }, { "type": "Point", "coordinates": [10.0, 20.0] } ] },
             db: 10,
             points: points
-
         });
+    };
+
+    style(feature) {
+        let co='#D92626';
+        if ( feature.properties.ADMIN === 'Russia' ) {
+            co = '#00FF04'
+        }
+        return {
+            fillColor: co,
+            weight: 0.3,
+            opacity: 1,
+            color: '#D92626',
+            dashArray: '3',
+            fillOpacity: 0.5
+        };
     };
 
     render() {
         const center = [this.state.lat, this.state.lng]
 
         return (
-            <div>
-                <MapContainer center={center} zoom={this.state.zoom} scrollWheelZoom={false}>
-                    <TileLayer
-                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    {this.state.points.map((elem, i) => {
-                        console.log(this.state.points.length)
-                        return (
-                            <Marker position={{lat:elem.lat, lng:elem.lng}} key={i}>
-                                <Circle 
-                                    center={{lat:elem.lat, lng:elem.lng}}
-                                    fillColor={elem.color}
-                                    color={elem.color}
-                                    radius={29000}/>
-                            </Marker> 
-                        )
-                    })}
-
-                    { this.state.cs && (
-                        <GeoJSON data={this.state.features} ref={this.GeoJsonLayer} />
-                    )};
-                </MapContainer>
-                <input type="text" value={ this.state.url } onChange={this.handleChange}/><button onClick={this.handleClick}>Кнопка</button>
-                <div className="color-block">
-                    <div className="color-min_block">
-                        <input className="color-min" type="color" name="min" value={ this.state.minColor } onChange={this.handleMinColor}/>
-                        <p>Минимальный цвет</p>
+            <div className="container">
+                <div>
+                    <MapContainer center={center} zoom={this.state.zoom} scrollWheelZoom={false}>
+                        <TileLayer
+                            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+                        { this.state.cs && (
+                            <GeoJSON data={this.state.cs} ref={this.GeoJsonLayer} style={this.style}/>
+                        )};
+                        {this.state.points.map((elem, i) => {
+                            console.log(this.state.points.length)
+                            return (
+                                <Marker position={{lat:elem.lat, lng:elem.lng}} key={i}>
+                                    <Circle 
+                                        center={{lat:elem.lat, lng:elem.lng}}
+                                        fillColor={elem.color}
+                                        color={elem.color}
+                                        radius={29000}/>
+                                </Marker> 
+                            )
+                        })}
+                        {/* {this.state.cs && <Polygon position={this.state.cs}/>} */}
+                        {/* {this.state.cs && this.state.cs.map((elem, i) => {
+                            // console.log(this.state.points.length)
+                            return (
+                                <Polygon position={elem}></Polygon>
+                            )
+                        })} */}
+                    </MapContainer>
+                </div>
+                <div className="nav-bar">
+                    <div>
+                        <h1 className="block-title">Поиск</h1>
+                        <div className="search-block">
+                            <input className="custom-input"  type="text" 
+                                    value={ this.state.url } 
+                                    onChange={this.handleChange}
+                            />
+                            <button className="search-block__button" onClick={this.handleClick}>
+                                <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="m20 8h-2a5 5 0 0 0 -10 0h-2a7 7 0 0 1 14 0z"/><path d="m25 15a2.94 2.94 0 0 0 -1.47.4 3 3 0 0 0 -2.53-1.4 2.94 2.94 0 0 0 -1.47.4 3 3 0 0 0 -3.53-1.22v-5.18a3 3 0 0 0 -6 0v11.1l-2.23-1.52a2.93 2.93 0 0 0 -1.77-.58 3 3 0 0 0 -2.12 5.13l8 7.3a6.16 6.16 0 0 0 4.12 1.57h5a7 7 0 0 0 7-7v-6a3 3 0 0 0 -3-3zm1 9a5 5 0 0 1 -5 5h-5a4.17 4.17 0 0 1 -2.76-1l-7.95-7.3a1 1 0 0 1 -.29-.7 1 1 0 0 1 1.6-.8l5.4 3.7v-14.9a1 1 0 0 1 2 0v11h2v-3a1 1 0 0 1 2 0v3h2v-2a1 1 0 0 1 2 0v2h2v-1a1 1 0 0 1 2 0z"/>
+                                    <path d="m0 0h32v32h-32z" fill="none"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                    <div className="color-min_block">
-                        <input className="color-max" type="color" name="max" value={ this.state.maxColor } onChange={this.handleMaxColor}/>
-                        <p>Максимальный цвет</p>
+                    <div className="color-block">
+                        <h1 className="block-title">Стилизация</h1>
+                        <div className="color-style__block">
+                            <label>
+                                <input  className="color-min" 
+                                        type="color" 
+                                        id="color-min" 
+                                        name="color-min" 
+                                        value={this.state.minColor} 
+                                        onChange={this.handleMinColor}
+                                />
+                            </label>
+                            <h4>Начальный цвет</h4>
+                        </div>
+                        <div className="color-style__block">
+                            <label>
+                                <input  className="color-max" 
+                                        type="color" 
+                                        id="color-max" 
+                                        name="color-max" 
+                                        value={this.state.maxColor} 
+                                        onChange={this.handleMaxColor}
+                                />
+                            </label>
+                            <h4>Конечный цвет</h4>
+                        </div>
                     </div>
                 </div>
             </div>

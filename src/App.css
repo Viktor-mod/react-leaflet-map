@@ -1,19 +1,13 @@
 @import 'leaflet/dist/leaflet.css';
 
-/* .markercluster-map {
+body,
+#root,
+.leaflet-container {
     height: 100vh;
-  }; */
-
-  body,
-  #root,
-  .leaflet-container {
-      height: 100vh;
-      width: 100vw;
-  };
-
-
-    /* .color-block {
-        display: flex;
-        flex-direction: column;
-    }; */
+    width: 80vw;
+    box-sizing: border-box
+}
+.App {
+    width: 100vw;
+}
 
