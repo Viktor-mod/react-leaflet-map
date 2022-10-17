@@ -1,8 +1,7 @@
 import React from 'react';
-import { MapContainer, TileLayer, GeoJSON, Marker, Circle, Polygon } from 'react-leaflet';
-// import countries from './countries.json'
+import { MapContainer, TileLayer, GeoJSON, Marker, Circle } from 'react-leaflet';
 import axios from 'axios'
-import L from 'leaflet'
+import inside from 'point-in-polygon'
 
 import './App.css'
 import './DinaMap.css'
@@ -22,9 +21,10 @@ export class DinaMap extends React.Component {
         lng: 105,
         zoom: 4,
         cs: null,
-        url: "http://cris.icc.ru/dataset/list?f=2132&count_rows=true&unique=undefined&count_rows=1&iDisplayStart=0&iDisplayLength=10",
-        minColor: '#000000',
-        maxColor: '#ffffff'
+        url: "http://cris.icc.ru/dataset/list?f=2132&count_rows=true&unique=undefined&count_rows=1&iDisplayStart=0&iDisplayLength=100",
+        minColor: '#ff0000',
+        maxColor: '#00FF2A',
+        pointColor: '#000000'
     };
 
     constructor(props) {
@@ -34,7 +34,9 @@ export class DinaMap extends React.Component {
         this.handleChange = this.handleChange.bind(this);
         this.handleMinColor = this.handleMinColor.bind(this);
         this.handleMaxColor = this.handleMaxColor.bind(this);
+        this.handlePointColor = this.handlePointColor.bind(this);
         this.mapRef = React.createRef();
+        this.style = this.style.bind(this);
     }
 
     clearMap() {
@@ -64,6 +66,11 @@ export class DinaMap extends React.Component {
     handleMaxColor(event) {
         console.log(this)
         this.setState({maxColor: event.target.value});
+    };
+
+    handlePointColor(event) {
+        console.log(this)
+        this.setState({pointColor: event.target.value});
     };
 
     getPart(i, qnt, minColor, maxColor) {
@@ -100,30 +107,27 @@ export class DinaMap extends React.Component {
     getMapData = async (url) => {
         let MapData = await axios.get(url);
 
-        let newcs=[];
+        // let newcs=[];
 
         // this.clearMap();
 
         let countries = await axios.get(
-            "/countries.json"
+            // "/countries.json"
+            // "/region.json",
+            "/oblast.json"
         );
 
-        function onEachCountries(feature, layer) {
-            const countryName = feature.properties.ADMIN;
-            layer.setStyle({ fillColor: 'yellow', weight: 2, fillOpacity: 5 })
-            newcs.push(layer);
-            //   if (countryName !== "Russia") {
-            //     layer.setStyle({ fillColor: 'yellow', weight: 2, fillOpacity: 5 })
-            //   } else {
-            //     layer.setStyle({ color: "#000000", fillColor: "white", weight: 1 })
-            //   }
-          }
+        // function onEachCountries(feature, layer) {
+        //     // const countryName = feature.properties.ADMIN;
+        //     // layer.setStyle({ fillColor: 'yellow', weight: 2, fillOpacity: 5 })
+        //     newcs.push(layer);
+        // }
           
-        let vectorLayer = L.geoJson(countries.data, {
-            onEachFeature: onEachCountries
-        });
-        console.log(vectorLayer);
-        console.log("----")
+        // let vectorLayer = L.geoJson(countries.data, {
+        //     onEachFeature: onEachCountries
+        // });
+        // console.log(vectorLayer);
+        // console.log("----")
 
 
         // console.log(countries.data.features)
@@ -135,7 +139,7 @@ export class DinaMap extends React.Component {
 
         let reference = React.createRef();
 
-        let fs = [];
+        // let fs = [];
         let points = [];
         let Mlist = MapData.data.aaData;
         for (let index = 0; index < Mlist.length; index++) {
@@ -180,16 +184,29 @@ export class DinaMap extends React.Component {
     };
 
     style(feature) {
-        let co='#D92626';
+        const polygon = feature.geometry.coordinates[0][0];
+        let qntInPol = 0;
+        // let co = '#D92626';
         if ( feature.properties.ADMIN === 'Russia' ) {
-            co = '#00FF04'
-        }
+            // co = '#00FF04'
+            // console.log(this)
+            
+        };
+        for ( let i = 0; i < this.state.points.length; i++) {
+            let pnt = this.state.points[i];
+            pnt.lat = parseFloat(pnt.lat);
+            pnt.lng = parseFloat(pnt.lng);
+            if (inside([pnt.lng, pnt.lat], polygon)) {
+                qntInPol = qntInPol + 1;
+            };
+        };
+        console.log(qntInPol)
         return {
-            fillColor: co,
-            weight: 0.3,
+            fillColor: this.getColor(qntInPol, 3),
+            weight: 1,
             opacity: 1,
             color: '#D92626',
-            dashArray: '3',
+            dashArray: '1',
             fillOpacity: 0.5
         };
     };
@@ -204,6 +221,7 @@ export class DinaMap extends React.Component {
                         <TileLayer
                             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                            // url="https://tiles.stadiamaps.com/tiles/outdoors/{z}/{x}/{y}{r}.png"
                         />
                         { this.state.cs && (
                             <GeoJSON data={this.state.cs} ref={this.GeoJsonLayer} style={this.style}/>
@@ -214,19 +232,13 @@ export class DinaMap extends React.Component {
                                 <Marker position={{lat:elem.lat, lng:elem.lng}} key={i}>
                                     <Circle 
                                         center={{lat:elem.lat, lng:elem.lng}}
-                                        fillColor={elem.color}
-                                        color={elem.color}
-                                        radius={29000}/>
+                                        fillColor={this.state.pointColor}
+                                        color={this.state.pointColor}
+                                        weight={1}
+                                        radius={18000}/>
                                 </Marker> 
                             )
                         })}
-                        {/* {this.state.cs && <Polygon position={this.state.cs}/>} */}
-                        {/* {this.state.cs && this.state.cs.map((elem, i) => {
-                            // console.log(this.state.points.length)
-                            return (
-                                <Polygon position={elem}></Polygon>
-                            )
-                        })} */}
                     </MapContainer>
                 </div>
                 <div className="nav-bar">
@@ -235,7 +247,7 @@ export class DinaMap extends React.Component {
                         <div className="search-block">
                             <input className="custom-input"  type="text" 
                                     value={ this.state.url } 
-                                    onChange={this.handleChange}
+                                    onChange={ this.handleChange }
                             />
                             <button className="search-block__button" onClick={this.handleClick}>
                                 <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -270,6 +282,18 @@ export class DinaMap extends React.Component {
                                 />
                             </label>
                             <h4>Конечный цвет</h4>
+                        </div>
+                        <div className="color-style__block">
+                            <label>
+                                <input  className="color-max" 
+                                        type="color" 
+                                        id="color-max" 
+                                        name="color-max" 
+                                        value={this.state.pointColor} 
+                                        onChange={this.handlePointColor}
+                                />
+                            </label>
+                            <h4>Цвет точки</h4>
                         </div>
                     </div>
                 </div>
