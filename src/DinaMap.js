@@ -21,7 +21,7 @@ export class DinaMap extends React.Component {
         lng: 105,
         zoom: 4,
         cs: null,
-        url: "http://cris.icc.ru/dataset/list?f=2132&count_rows=true&unique=undefined&count_rows=1&iDisplayStart=0&iDisplayLength=100",
+        url: "https://geos.icc.ru/dataset/list?f=2132",
         minColor: '#ff0000',
         maxColor: '#00FF2A',
         pointColor: '#000000'
