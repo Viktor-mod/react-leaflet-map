@@ -81,10 +81,15 @@ p {
     background: none;
     padding: 0;
     cursor: pointer;
+    transition: cubic-bezier(0.785, 0.135, 0.15, 0.86) .3s all;
 }
 .search-block__button svg {
     fill: #4d4d4d;
     width: 24px;
+}
+.search-block__button:hover {
+    background-color: #dadada;
+    fill: #000;
 }
 .search-block__button svg:hover {
     fill: #000;
@@ -167,4 +172,27 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 input[type="color"]::-webkit-color-swatch {
     border: none;  
     border-radius: 50%;
+}
+
+/******************* Select ******************/
+select {
+    background: #f4f4f4;
+    border-radius: 10px;
+    padding: 10px 15px;
+    border: none;
+    outline: none;
+    width: 100%;
+    font-weight: 600;
+    font-size: 12px;
+    line-height: 24px;
+    color: #4d4d4d;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url(./Static/Icon/arrow-down-s-fill.svg);
+    background-repeat: no-repeat;
+    background-position: right;
+    background-position-x: calc(100% - 10px);
+    background-size: 20px;
 }

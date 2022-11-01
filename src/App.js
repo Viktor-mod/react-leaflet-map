@@ -1,5 +1,5 @@
 import './App.css';
-import { DinaMap } from './DinaMap.js'
+import { DinaMap } from './DinaMap.jsx'
 
 function App() {
   return (
